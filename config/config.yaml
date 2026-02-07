@@ -3,4 +3,4 @@ mongo:
   database: "fs_backend_db"
 
 server:
-  port: ":8080"
+  port: ":5000"

@@ -2,8 +2,6 @@ package main
 
 import (
     "fs-backend/config"
-    "fs-backend/connections"
-    "fs-backend/repository"
     "fs-backend/routes"
     "fs-backend/services"
     "log"
@@ -14,24 +12,19 @@ import (
 func main() {
     // 1. Initialize Configuration
     config.Init()
-    mongoURI := config.GetString("mongo.uri")
-    mongoDB := config.GetString("mongo.database")
     port := config.GetString("server.port")
+    pdfBaseURL := config.GetString("pdf_service.base_url")
 
-    // 2. Initialize Database
-    db := connections.ConnectMongo(mongoURI, mongoDB)
+    // 2. Initialize Dependency Injection (Manual)
+    pdfService := services.NewPdfGeneratorService(pdfBaseURL)
 
-    // 3. Initialize Dependency Injection (Manual)
-    postRepo := repository.NewPostRepository(db)
-    postService := services.NewPostService(postRepo)
-
-    // 4. Initialize Router
+    // 3. Initialize Router
     r := gin.Default()
 
-    // 5. Register Routes
-    routes.RegisterRoutes(r, postService)
+    // 4. Register Routes
+    routes.RegisterRoutes(r, pdfService)
 
-    // 6. Start Server
+    // 5. Start Server
     log.Println("Server starting on " + port)
     if err := r.Run(port); err != nil {
         log.Fatal(err)

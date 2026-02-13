@@ -1,1 +1,20 @@
 config/config.yaml
+tmp/
+
+# local env files
+.env
+.env.*
+!.env.example
+
+# Go test/coverage/profiling artifacts
+*.test
+*.out
+coverage.out
+*.prof
+*.pprof
+
+# IDE/OS noise
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -8,6 +8,7 @@ import (
 	"fs-backend/services"
 	"log"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -42,6 +43,12 @@ func main() {
 
 	// 5. Initialize Router
 	r := gin.Default()
+
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowOrigins = []string{"http://localhost:4200"}
+	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
+	corsConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type"}
+	r.Use(cors.New(corsConfig))
 
 	// 6. Register Routes
 	routes.RegisterRoutes(r, pdfService, docConvertService, docPreviewService)

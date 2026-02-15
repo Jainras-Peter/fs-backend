@@ -13,7 +13,7 @@ import (
 
 // DocumentConvertService defines the interface for document conversion operations
 type DocumentConvertService interface {
-	ConvertMBL(ctx context.Context, fileBytes []byte, filename string) (*mbl_schema.ConvertMBLResponse, error)
+	ConvertMBL(ctx context.Context, fileBytes []byte, filename string, mode string) (*mbl_schema.ConvertMBLResponse, error)
 }
 
 type documentConvertService struct {
@@ -52,7 +52,7 @@ func NewDocumentConvertService(
 // 5. Check if MBL number already exists → skip insert if duplicate
 // 6. Lookup linked shippers via Booking → Shipment → Shipper chain
 // 7. Return response
-func (s *documentConvertService) ConvertMBL(ctx context.Context, fileBytes []byte, filename string) (*mbl_schema.ConvertMBLResponse, error) {
+func (s *documentConvertService) ConvertMBL(ctx context.Context, fileBytes []byte, filename string, mode string) (*mbl_schema.ConvertMBLResponse, error) {
 	// Step 1: Compute file hash and check MBL_Cache
 	fileHash := computeFileHash(fileBytes)
 	var extractedData map[string]interface{}
@@ -88,6 +88,7 @@ func (s *documentConvertService) ConvertMBL(ctx context.Context, fileBytes []byt
 
 	// Step 3: Map the flat extracted data to the structured MBL document
 	mblDoc := mapExtractionToMBLDocument(extractedData)
+	mblDoc.Mode = mode
 	mblNumber := mblDoc.MBL.BillOfLadingNo
 	log.Printf("MBL number extracted: %s", mblNumber)
 

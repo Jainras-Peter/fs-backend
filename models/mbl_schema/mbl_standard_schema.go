@@ -9,6 +9,7 @@ import (
 // MBLDocument is the top-level struct stored in MongoDB "MBL" collection
 type MBLDocument struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+	Mode      string             `bson:"mode" json:"mode"` // "FCL" or "LCL"
 	MBL       MBLData            `bson:"mbl" json:"mbl"`
 	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
 }
@@ -85,17 +86,17 @@ type ShipmentDates struct {
 
 // Cargo holds container and goods information
 type Cargo struct {
-	ContainerNo      string           `bson:"container_no" json:"container_no"`
-	ContainerType    string           `bson:"container_type" json:"container_type"`
-	SealNumber       string           `bson:"seal_number" json:"seal_number"`
-	MarksAndNumbers  string           `bson:"marks_and_numbers" json:"marks_and_numbers"`
-	NumberOfPackages int              `bson:"number_of_packages" json:"number_of_packages"`
-	PackageType      string           `bson:"package_type" json:"package_type"`
-	DescriptionOfGoods string         `bson:"description_of_goods" json:"description_of_goods"`
-	HSCode           string           `bson:"hs_code" json:"hs_code"`
-	GrossWeight      WeightMeasurement `bson:"gross_weight" json:"gross_weight"`
-	NetWeight        WeightMeasurement `bson:"net_weight" json:"net_weight"`
-	Measurement      WeightMeasurement `bson:"measurement" json:"measurement"`
+	ContainerNo        string            `bson:"container_no" json:"container_no"`
+	ContainerType      string            `bson:"container_type" json:"container_type"`
+	SealNumber         string            `bson:"seal_number" json:"seal_number"`
+	MarksAndNumbers    string            `bson:"marks_and_numbers" json:"marks_and_numbers"`
+	NumberOfPackages   int               `bson:"number_of_packages" json:"number_of_packages"`
+	PackageType        string            `bson:"package_type" json:"package_type"`
+	DescriptionOfGoods string            `bson:"description_of_goods" json:"description_of_goods"`
+	HSCode             string            `bson:"hs_code" json:"hs_code"`
+	GrossWeight        WeightMeasurement `bson:"gross_weight" json:"gross_weight"`
+	NetWeight          WeightMeasurement `bson:"net_weight" json:"net_weight"`
+	Measurement        WeightMeasurement `bson:"measurement" json:"measurement"`
 }
 
 // WeightMeasurement holds a value and its unit

@@ -26,6 +26,7 @@ func main() {
 	// 3. Initialize Repositories
 	mblRepo := repository.NewMBLRepository(db)
 	mblCacheRepo := repository.NewMBLCacheRepository(db)
+	hblRepo := repository.NewHBLRepository(db)
 	bookingRepo := repository.NewBookingRepository(db)
 	shipmentRepo := repository.NewShipmentRepository(db)
 	shipperRepo := repository.NewShipperRepository(db)
@@ -35,12 +36,15 @@ func main() {
 	docConvertService := services.NewDocumentConvertService(
 		extractionBaseURL, mblRepo, mblCacheRepo, bookingRepo, shipmentRepo, shipperRepo,
 	)
+	docPreviewService := services.NewDocumentPreviewService(
+		mblRepo, hblRepo, shipmentRepo, shipperRepo,
+	)
 
 	// 5. Initialize Router
 	r := gin.Default()
 
 	// 6. Register Routes
-	routes.RegisterRoutes(r, pdfService, docConvertService)
+	routes.RegisterRoutes(r, pdfService, docConvertService, docPreviewService)
 
 	// 7. Start Server
 	log.Println("Server starting on " + port)

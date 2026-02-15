@@ -35,7 +35,14 @@ func (ctrl *DocumentConvertController) ConvertMBL(ctx *gin.Context) {
 		return
 	}
 
-	// 2. Parse uploaded file
+	// 2. Validate mode field
+	mode := ctx.PostForm("mode")
+	if mode != "FCL" && mode != "LCL" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "mode must be 'FCL' or 'LCL'"})
+		return
+	}
+
+	// 3. Parse uploaded file
 	fileHeader, err := ctx.FormFile("file")
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "file is required"})
@@ -56,8 +63,8 @@ func (ctrl *DocumentConvertController) ConvertMBL(ctx *gin.Context) {
 		return
 	}
 
-	// 4. Call service
-	result, err := ctrl.service.ConvertMBL(ctx.Request.Context(), fileBytes, fileHeader.Filename)
+	// 5. Call service
+	result, err := ctrl.service.ConvertMBL(ctx.Request.Context(), fileBytes, fileHeader.Filename, mode)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

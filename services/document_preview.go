@@ -11,6 +11,7 @@ import (
 // DocumentPreviewService defines the interface for document preview operations
 type DocumentPreviewService interface {
 	PreviewHBL(ctx context.Context, req hbl_schema.PreviewHBLRequest) (*hbl_schema.PreviewHBLResponse, error)
+	UpdateHBL(ctx context.Context, hblNumber string, data hbl_schema.HBLData) error
 }
 
 type documentPreviewService struct {
@@ -94,6 +95,14 @@ func (s *documentPreviewService) PreviewHBL(ctx context.Context, req hbl_schema.
 		// Generate HBL number
 		hblNumber := generateHBLNumber(req.MBLNumber, hblIndex)
 
+		// Check if HBL already exists (e.g. edited by user)
+		if existingDoc, err := s.hblRepo.FindByHBLNumber(ctx, hblNumber); err == nil {
+			log.Printf("Found existing HBL %s, using stored data", hblNumber)
+			hblList = append(hblList, existingDoc.HBL)
+			hblIndex++
+			continue
+		}
+
 		// Map MBL + shipment + shipper → HBL
 		hblData := mapMBLToHBL(mblDoc.MBL, shipment, shipper, hblNumber, mblDoc.Mode)
 
@@ -119,4 +128,9 @@ func (s *documentPreviewService) PreviewHBL(ctx context.Context, req hbl_schema.
 		TotalCount: len(hblList),
 		HBLList:    hblList,
 	}, nil
+}
+
+// UpdateHBL updates an existing HBL document
+func (s *documentPreviewService) UpdateHBL(ctx context.Context, hblNumber string, data hbl_schema.HBLData) error {
+	return s.hblRepo.UpdateHBL(ctx, hblNumber, data)
 }

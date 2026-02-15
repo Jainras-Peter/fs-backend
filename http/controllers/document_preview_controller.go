@@ -45,3 +45,25 @@ func (ctrl *DocumentPreviewController) PreviewHBL(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, result)
 }
+
+// UpdateHBL handles PUT /api/v1/hbl/:hbl_number
+func (ctrl *DocumentPreviewController) UpdateHBL(ctx *gin.Context) {
+	hblNumber := ctx.Param("hbl_number")
+	if hblNumber == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "hbl_number is required"})
+		return
+	}
+
+	var data hbl_schema.HBLData
+	if err := ctx.ShouldBindJSON(&data); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := ctrl.service.UpdateHBL(ctx.Request.Context(), hblNumber, data); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "HBL updated successfully"})
+}

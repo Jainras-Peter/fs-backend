@@ -1,32 +1,50 @@
 package main
 
 import (
-    "fs-backend/config"
-    "fs-backend/routes"
-    "fs-backend/services"
-    "log"
+	"fs-backend/config"
+	"fs-backend/connections"
+	"fs-backend/repository"
+	"fs-backend/routes"
+	"fs-backend/services"
+	"log"
 
-    "github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
-    // 1. Initialize Configuration
-    config.Init()
-    port := config.GetString("server.port")
-    pdfBaseURL := config.GetString("pdf_service.base_url")
+	// 1. Initialize Configuration
+	config.Init()
+	port := config.GetString("server.port")
+	pdfBaseURL := config.GetString("pdf_service.base_url")
+	mongoURI := config.GetString("mongo.uri")
+	mongoDBName := config.GetString("mongo.database")
+	extractionBaseURL := config.GetString("extraction_service.base_url")
 
-    // 2. Initialize Dependency Injection (Manual)
-    pdfService := services.NewPdfGeneratorService(pdfBaseURL)
+	// 2. Initialize MongoDB
+	db := connections.ConnectMongo(mongoURI, mongoDBName)
 
-    // 3. Initialize Router
-    r := gin.Default()
+	// 3. Initialize Repositories
+	mblRepo := repository.NewMBLRepository(db)
+	mblCacheRepo := repository.NewMBLCacheRepository(db)
+	bookingRepo := repository.NewBookingRepository(db)
+	shipmentRepo := repository.NewShipmentRepository(db)
+	shipperRepo := repository.NewShipperRepository(db)
 
-    // 4. Register Routes
-    routes.RegisterRoutes(r, pdfService)
+	// 4. Initialize Services (Manual DI)
+	pdfService := services.NewPdfGeneratorService(pdfBaseURL)
+	docConvertService := services.NewDocumentConvertService(
+		extractionBaseURL, mblRepo, mblCacheRepo, bookingRepo, shipmentRepo, shipperRepo,
+	)
 
-    // 5. Start Server
-    log.Println("Server starting on " + port)
-    if err := r.Run(port); err != nil {
-        log.Fatal(err)
-    }
+	// 5. Initialize Router
+	r := gin.Default()
+
+	// 6. Register Routes
+	routes.RegisterRoutes(r, pdfService, docConvertService)
+
+	// 7. Start Server
+	log.Println("Server starting on " + port)
+	if err := r.Run(port); err != nil {
+		log.Fatal(err)
+	}
 }

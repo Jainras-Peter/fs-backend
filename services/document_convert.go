@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fs-backend/models/mbl_schema"
 	"fs-backend/repository"
 	"log"
@@ -70,6 +71,23 @@ func (s *documentConvertService) ConvertMBL(ctx context.Context, fileBytes []byt
 			return nil, err
 		}
 		log.Printf("MBL extraction completed for file: %s", filename)
+
+		// Validation: Ensure essential MBL details are present before caching
+		mblNumberCheck := getStr(extractedData, "mbl_number", "")
+		carrierNameCheck := getStr(extractedData, "carrier_name", "")
+		shipperNameCheck := getStr(extractedData, "shipper_name", "")
+		vesselNameCheck := getStr(extractedData, "vessel_name", "")
+
+		validCount := 0
+		if mblNumberCheck != "" { validCount++ }
+		if carrierNameCheck != "" { validCount++ }
+		if shipperNameCheck != "" { validCount++ }
+		if vesselNameCheck != "" { validCount++ }
+
+		if mblNumberCheck == "" || validCount < 2 {
+			log.Printf("Validation failed: MBL details not found for file %s", filename)
+			return nil, errors.New("MBL details not found")
+		}
 
 		// Step 2: Save extraction result to MBL_Cache
 		mblNumberForCache := ""

@@ -27,6 +27,10 @@ func (c *ShipmentController) CreateShipment(ctx *gin.Context) {
 
 	id, err := c.shipmentService.InsertShipment(ctx.Request.Context(), &input)
 	if err != nil {
+		if err.Error() == "Invalid shipper id" || err.Error() == "shipper ID is required" {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Enter valid shipper id"})
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create shipment"})
 		return
 	}

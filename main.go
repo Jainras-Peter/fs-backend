@@ -42,7 +42,7 @@ func main() {
 		mblRepo, hblRepo, shipmentRepo, shipperRepo,
 	)
 	bookingService := services.NewBookingService(shipperRepo, bookingRepo)
-	shipmentService := services.NewShipmentService(shipmentRepo, bookingRepo)
+	shipmentService := services.NewShipmentService(shipmentRepo, bookingRepo, shipperRepo)
 
 	// Initialize Controllers
 	bookingController := controllers.NewBookingController(bookingService)

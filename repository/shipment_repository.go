@@ -11,15 +11,15 @@ import (
 
 // ShipmentDocument represents a document in the "shipments" collection
 type ShipmentDocument struct {
-	ShipmentID       string  `bson:"shipment_id"`
-	ShipperID        string  `bson:"shipper_id"`
-	GoodsDescription string  `bson:"goods_description"`
-	PackagesCount    int     `bson:"packages_count"`
-	GrossWeight      float64 `bson:"gross_weight"`
-	NetWeight        float64 `bson:"net_weight"`
-	Volume           float64 `bson:"volume"`
-	MarksAndNumbers  string  `bson:"marks_and_numbers"`
-	Measurement      string  `bson:"measurement"`
+	ShipmentID       string  `bson:"shipment_id" json:"shipment_id"`
+	ShipperID        string  `bson:"shipper_id" json:"shipper_id"`
+	GoodsDescription string  `bson:"goods_description" json:"goods_description"`
+	PackagesCount    int     `bson:"packages_count" json:"packages_count"`
+	GrossWeight      float64 `bson:"gross_weight" json:"gross_weight"`
+	NetWeight        float64 `bson:"net_weight" json:"net_weight"`
+	Volume           float64 `bson:"volume" json:"volume"`
+	MarksAndNumbers  string  `bson:"marks_and_numbers" json:"marks_and_numbers"`
+	Measurement      string  `bson:"measurement" json:"measurement"`
 }
 
 // ShipmentRepository defines read operations on the "shipments" collection

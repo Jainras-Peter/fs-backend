@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fs-backend/repository"
 )
 
@@ -15,12 +16,14 @@ type ShipmentService interface {
 type shipmentService struct {
 	shipmentRepo repository.ShipmentRepository
 	bookingRepo  repository.BookingRepository
+	shipperRepo  repository.ShipperRepository
 }
 
-func NewShipmentService(shipmentRepo repository.ShipmentRepository, bookingRepo repository.BookingRepository) ShipmentService {
+func NewShipmentService(shipmentRepo repository.ShipmentRepository, bookingRepo repository.BookingRepository, shipperRepo repository.ShipperRepository) ShipmentService {
 	return &shipmentService{
 		shipmentRepo: shipmentRepo,
 		bookingRepo:  bookingRepo,
+		shipperRepo:  shipperRepo,
 	}
 }
 
@@ -57,6 +60,18 @@ func (s *shipmentService) GetAllShipments(ctx context.Context) ([]ShipmentWithSt
 }
 
 func (s *shipmentService) InsertShipment(ctx context.Context, doc *repository.ShipmentDocument) (string, error) {
+	// Validate shipper ID
+	if doc.ShipperID == "" {
+		return "", errors.New("shipper ID is required")
+	}
+	shippers, err := s.shipperRepo.FindByShipperIDs(ctx, []string{doc.ShipperID})
+	if err != nil {
+		return "", err
+	}
+	if len(shippers) == 0 {
+		return "", errors.New("Invalid shipper id")
+	}
+
 	// Auto ID logic
 	newID, err := s.shipmentRepo.GetNextShipmentID(ctx)
 	if err != nil {

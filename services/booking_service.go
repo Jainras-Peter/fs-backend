@@ -12,15 +12,18 @@ type BookingService interface {
 	GetShipperList(ctx context.Context) ([]repository.ShipperDocument, error)
 	UpdateShipper(ctx context.Context, id primitive.ObjectID, updates map[string]interface{}) error
 	DeleteShipper(ctx context.Context, id primitive.ObjectID) error
+	SyncBooking(ctx context.Context, mblNumber, shipmentID string) error
 }
 
 type bookingService struct {
 	shipperRepo repository.ShipperRepository
+	bookingRepo repository.BookingRepository
 }
 
-func NewBookingService(shipperRepo repository.ShipperRepository) BookingService {
+func NewBookingService(shipperRepo repository.ShipperRepository, bookingRepo repository.BookingRepository) BookingService {
 	return &bookingService{
 		shipperRepo: shipperRepo,
+		bookingRepo: bookingRepo,
 	}
 }
 
@@ -44,4 +47,20 @@ func (s *bookingService) UpdateShipper(ctx context.Context, id primitive.ObjectI
 func (s *bookingService) DeleteShipper(ctx context.Context, id primitive.ObjectID) error {
 	_, err := s.shipperRepo.DeleteShipper(ctx, id)
 	return err
+}
+
+func (s *bookingService) SyncBooking(ctx context.Context, mblNumber, shipmentID string) error {
+	booking, err := s.bookingRepo.FindByMBLNumber(ctx, mblNumber)
+	if err == nil && booking != nil {
+		// Booking exists, append shipment to it
+		return s.bookingRepo.AddShipmentToBooking(ctx, mblNumber, shipmentID)
+	}
+	
+	// If it doesn't exist, create it
+	newBooking := &repository.BookingDocument{
+		MBLNumber:   mblNumber,
+		ShipmentIDs: []string{shipmentID},
+		Status:      "Booked",
+	}
+	return s.bookingRepo.CreateBooking(ctx, newBooking)
 }

@@ -41,10 +41,12 @@ func main() {
 	docPreviewService := services.NewDocumentPreviewService(
 		mblRepo, hblRepo, shipmentRepo, shipperRepo,
 	)
-	bookingService := services.NewBookingService(shipperRepo)
+	bookingService := services.NewBookingService(shipperRepo, bookingRepo)
+	shipmentService := services.NewShipmentService(shipmentRepo, bookingRepo)
 
 	// Initialize Controllers
 	bookingController := controllers.NewBookingController(bookingService)
+	shipmentController := controllers.NewShipmentController(shipmentService)
 
 	// 5. Initialize Router
 	r := gin.Default()
@@ -56,7 +58,7 @@ func main() {
 	r.Use(cors.New(corsConfig))
 
 	// 6. Register Routes
-	routes.RegisterRoutes(r, pdfService, docConvertService, docPreviewService, bookingController)
+	routes.RegisterRoutes(r, pdfService, docConvertService, docPreviewService, bookingController, shipmentController)
 
 	// 7. Start Server
 	log.Println("Server starting on " + port)

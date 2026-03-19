@@ -1,0 +1,80 @@
+package services
+
+import (
+	"context"
+	"fs-backend/repository"
+)
+
+type ShipmentService interface {
+	GetAllShipments(ctx context.Context) ([]ShipmentWithStatusDTO, error)
+	InsertShipment(ctx context.Context, doc *repository.ShipmentDocument) (string, error)
+	UpdateShipment(ctx context.Context, id string, doc *repository.ShipmentDocument) error
+	DeleteShipment(ctx context.Context, id string) error
+}
+
+type shipmentService struct {
+	shipmentRepo repository.ShipmentRepository
+	bookingRepo  repository.BookingRepository
+}
+
+func NewShipmentService(shipmentRepo repository.ShipmentRepository, bookingRepo repository.BookingRepository) ShipmentService {
+	return &shipmentService{
+		shipmentRepo: shipmentRepo,
+		bookingRepo:  bookingRepo,
+	}
+}
+
+// ShipmentWithStatusDTO extends ShipmentDocument for the frontend
+type ShipmentWithStatusDTO struct {
+	repository.ShipmentDocument `bson:",inline"`
+	MBLNumber                   string `json:"mbl_number"`
+	Status                      string `json:"status"`
+}
+
+func (s *shipmentService) GetAllShipments(ctx context.Context) ([]ShipmentWithStatusDTO, error) {
+	shipments, err := s.shipmentRepo.GetAllShipments(ctx)
+	if err != nil {
+		return nil, err
+	}
+	
+	var dtos []ShipmentWithStatusDTO
+	for _, shipment := range shipments {
+		dto := ShipmentWithStatusDTO{
+			ShipmentDocument: shipment,
+			MBLNumber:        "-",
+			Status:           "Yet to sync",
+		}
+		
+		booking, err := s.bookingRepo.FindByShipmentID(ctx, shipment.ShipmentID)
+		if err == nil && booking != nil {
+			dto.MBLNumber = booking.MBLNumber
+			dto.Status = "MBL number Sycned"
+		}
+		dtos = append(dtos, dto)
+	}
+	
+	return dtos, nil
+}
+
+func (s *shipmentService) InsertShipment(ctx context.Context, doc *repository.ShipmentDocument) (string, error) {
+	// Auto ID logic
+	newID, err := s.shipmentRepo.GetNextShipmentID(ctx)
+	if err != nil {
+		return "", err
+	}
+	doc.ShipmentID = newID
+	
+	err = s.shipmentRepo.InsertShipment(ctx, doc)
+	if err != nil {
+		return "", err
+	}
+	return newID, nil
+}
+
+func (s *shipmentService) UpdateShipment(ctx context.Context, id string, doc *repository.ShipmentDocument) error {
+	return s.shipmentRepo.UpdateShipment(ctx, id, doc)
+}
+
+func (s *shipmentService) DeleteShipment(ctx context.Context, id string) error {
+	return s.shipmentRepo.DeleteShipment(ctx, id)
+}

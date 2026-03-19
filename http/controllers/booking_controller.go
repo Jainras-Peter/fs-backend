@@ -87,3 +87,23 @@ func (c *BookingController) DeleteShipper(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{"message": "Shipper deleted successfully"})
 }
+
+func (c *BookingController) SyncBooking(ctx *gin.Context) {
+	var input struct {
+		MBLNumber  string `json:"mbl_number" binding:"required"`
+		ShipmentID string `json:"shipment_id" binding:"required"`
+	}
+
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := c.bookingService.SyncBooking(ctx.Request.Context(), input.MBLNumber, input.ShipmentID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to sync booking"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "Booking synced successfully"})
+}

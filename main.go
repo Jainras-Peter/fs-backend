@@ -3,6 +3,7 @@ package main
 import (
 	"fs-backend/config"
 	"fs-backend/connections"
+	"fs-backend/http/controllers"
 	"fs-backend/repository"
 	"fs-backend/routes"
 	"fs-backend/services"
@@ -42,6 +43,12 @@ func main() {
 	docPreviewService := services.NewDocumentPreviewService(
 		mblRepo, hblRepo, shipmentRepo, shipperRepo,
 	)
+	bookingService := services.NewBookingService(shipperRepo, bookingRepo)
+	shipmentService := services.NewShipmentService(shipmentRepo, bookingRepo, shipperRepo)
+
+	// Initialize Controllers
+	bookingController := controllers.NewBookingController(bookingService)
+	shipmentController := controllers.NewShipmentController(shipmentService)
 
 	// 5. Initialize Router
 	r := gin.Default()
@@ -53,7 +60,7 @@ func main() {
 	r.Use(cors.New(corsConfig))
 
 	// 6. Register Routes
-	routes.RegisterRoutes(r, pdfService, pdfSaveService, docConvertService, docPreviewService)
+	routes.RegisterRoutes(r, pdfService, pdfSaveService, docConvertService, docPreviewService, bookingController, shipmentController)
 
 	// 7. Start Server
 	log.Println("Server starting on " + port)

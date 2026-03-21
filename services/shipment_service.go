@@ -91,5 +91,11 @@ func (s *shipmentService) UpdateShipment(ctx context.Context, id string, doc *re
 }
 
 func (s *shipmentService) DeleteShipment(ctx context.Context, id string) error {
-	return s.shipmentRepo.DeleteShipment(ctx, id)
+	err := s.shipmentRepo.DeleteShipment(ctx, id)
+	if err != nil {
+		return err
+	}
+	
+	// Ensure it is also removed from any Booking that might contain it
+	return s.bookingRepo.RemoveShipmentFromBooking(ctx, id)
 }

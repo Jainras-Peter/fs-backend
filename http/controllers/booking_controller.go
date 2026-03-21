@@ -107,3 +107,38 @@ func (c *BookingController) SyncBooking(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{"message": "Booking synced successfully"})
 }
+
+func (c *BookingController) GetStatusDetails(ctx *gin.Context) {
+	statuses, err := c.bookingService.GetStatusDetails(ctx.Request.Context())
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch status details"})
+		return
+	}
+	ctx.JSON(http.StatusOK, statuses)
+}
+
+func (c *BookingController) UpdateStatus(ctx *gin.Context) {
+	idParam := ctx.Param("id")
+	objID, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		return
+	}
+
+	var input struct {
+		Status string `json:"status" binding:"required"`
+	}
+
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err = c.bookingService.UpdateStatus(ctx.Request.Context(), objID, input.Status)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update status"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "Status updated successfully"})
+}

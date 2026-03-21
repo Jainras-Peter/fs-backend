@@ -13,6 +13,8 @@ type BookingService interface {
 	UpdateShipper(ctx context.Context, id primitive.ObjectID, updates map[string]interface{}) error
 	DeleteShipper(ctx context.Context, id primitive.ObjectID) error
 	SyncBooking(ctx context.Context, mblNumber, shipmentID string) error
+	GetStatusDetails(ctx context.Context) ([]repository.BookingDocument, error)
+	UpdateStatus(ctx context.Context, id primitive.ObjectID, status string) error
 }
 
 type bookingService struct {
@@ -63,4 +65,12 @@ func (s *bookingService) SyncBooking(ctx context.Context, mblNumber, shipmentID 
 		Status:      "Booked",
 	}
 	return s.bookingRepo.CreateBooking(ctx, newBooking)
+}
+
+func (s *bookingService) GetStatusDetails(ctx context.Context) ([]repository.BookingDocument, error) {
+	return s.bookingRepo.GetAllBookings(ctx)
+}
+
+func (s *bookingService) UpdateStatus(ctx context.Context, id primitive.ObjectID, status string) error {
+	return s.bookingRepo.UpdateBookingStatus(ctx, id, status)
 }

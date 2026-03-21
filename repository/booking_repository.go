@@ -5,15 +5,17 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // BookingDocument represents a document in the "Booking" collection
 type BookingDocument struct {
-	MBLNumber   string    `bson:"mbl_number"`
-	ShipmentIDs []string  `bson:"shipment_ids"`
-	Status      string    `bson:"status"`
-	CreatedAt   time.Time `bson:"created_at"`
+	ID          primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	MBLNumber   string             `bson:"mbl_number" json:"mbl_number"`
+	ShipmentIDs []string           `bson:"shipment_ids" json:"shipment_ids"`
+	Status      string             `bson:"status" json:"status"`
+	CreatedAt   time.Time          `bson:"created_at" json:"created_at"`
 }
 
 // BookingRepository defines read operations on the "Booking" collection
@@ -22,6 +24,9 @@ type BookingRepository interface {
 	CreateBooking(ctx context.Context, doc *BookingDocument) error
 	AddShipmentToBooking(ctx context.Context, mblNumber, shipmentID string) error
 	FindByShipmentID(ctx context.Context, shipmentID string) (*BookingDocument, error)
+	GetAllBookings(ctx context.Context) ([]BookingDocument, error)
+	UpdateBookingStatus(ctx context.Context, id primitive.ObjectID, status string) error
+	RemoveShipmentFromBooking(ctx context.Context, shipmentID string) error
 }
 
 type bookingRepository struct {
@@ -67,4 +72,36 @@ func (r *bookingRepository) FindByShipmentID(ctx context.Context, shipmentID str
 		return nil, err
 	}
 	return &doc, nil
+}
+
+func (r *bookingRepository) GetAllBookings(ctx context.Context) ([]BookingDocument, error) {
+	var bookings []BookingDocument
+	cursor, err := r.collection.Find(ctx, bson.M{})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	if err := cursor.All(ctx, &bookings); err != nil {
+		return nil, err
+	}
+	
+	if bookings == nil {
+		bookings = []BookingDocument{}
+	}
+	return bookings, nil
+}
+
+func (r *bookingRepository) UpdateBookingStatus(ctx context.Context, id primitive.ObjectID, status string) error {
+	filter := bson.M{"_id": id}
+	update := bson.M{"$set": bson.M{"status": status}}
+	_, err := r.collection.UpdateOne(ctx, filter, update)
+	return err
+}
+
+func (r *bookingRepository) RemoveShipmentFromBooking(ctx context.Context, shipmentID string) error {
+	filter := bson.M{"shipment_ids": shipmentID}
+	update := bson.M{"$pull": bson.M{"shipment_ids": shipmentID}}
+	_, err := r.collection.UpdateMany(ctx, filter, update)
+	return err
 }

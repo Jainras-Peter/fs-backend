@@ -1,0 +1,9 @@
+mongo:
+  uri: "mongodb+srv://jainras2004_db_user:jwwznAetL0xITNTc@freightship.bsq2mfp.mongodb.net/"
+  database: "fs-backend-db"
+server:
+  port: ":5000"
+pdf_service:
+   base_url: "http://localhost:3000"
+extraction_service:
+   base_url: "http://localhost:10000/extract"

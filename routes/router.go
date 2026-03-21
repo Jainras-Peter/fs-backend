@@ -7,8 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(router *gin.Engine, pdfService services.PdfGeneratorService, docConvertService services.DocumentConvertService, docPreviewService services.DocumentPreviewService) {
-	pdfController := controllers.NewPdfGeneratorController(pdfService)
+func RegisterRoutes(router *gin.Engine, pdfService services.PdfGeneratorService, pdfSaveService services.PdfSaveService, docConvertService services.DocumentConvertService, docPreviewService services.DocumentPreviewService) {
+	pdfSaveController := controllers.NewPdfSaveController(pdfSaveService)
+	pdfController := controllers.NewPdfGeneratorController(pdfService, pdfSaveController)
 	docConvertController := controllers.NewDocumentConvertController(docConvertService)
 	docPreviewController := controllers.NewDocumentPreviewController(docPreviewService)
 

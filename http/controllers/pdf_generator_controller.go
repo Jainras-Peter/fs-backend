@@ -1,38 +1,67 @@
 package controllers
 
 import (
-    "net/http"
+	"encoding/json"
+	"fmt"
+	"fs-backend/models"
+	"fs-backend/services"
+	"log"
+	"net/http"
 
-    "fs-backend/models"
-    "fs-backend/services"
-    "github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin"
 )
 
 type PdfGeneratorController struct {
-    service services.PdfGeneratorService
+	service        services.PdfGeneratorService
+	saveController *PdfSaveController
 }
 
-func NewPdfGeneratorController(service services.PdfGeneratorService) *PdfGeneratorController {
-    return &PdfGeneratorController{service: service}
+func NewPdfGeneratorController(service services.PdfGeneratorService, saveController *PdfSaveController) *PdfGeneratorController {
+	return &PdfGeneratorController{service: service, saveController: saveController}
 }
 
 func (c *PdfGeneratorController) Generate(ctx *gin.Context) {
-    var req models.PdfGeneratorRequest
-    if err := ctx.ShouldBindJSON(&req); err != nil {
-        ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-        return
-    }
+	var req models.PdfGenerationRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-    result, err := c.service.Generate(ctx.Request.Context(), req.DocumentTo, req.Document)
-    if err != nil {
-        ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
-        return
-    }
+	log.Printf("pdf-generator request received: mbl_number=%s total_count=%d hbl_count=%d", req.MBLNumber, req.TotalCount, len(req.HBLList))
 
-    contentType := result.ContentType
-    if contentType == "" {
-        contentType = "application/octet-stream"
-    }
+	result, err := c.service.Generate(ctx.Request.Context(), req)
+	if err != nil {
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
+		return
+	}
 
-    ctx.Data(result.StatusCode, contentType, result.Body)
+	if result.StatusCode < http.StatusOK || result.StatusCode >= http.StatusMultipleChoices {
+		contentType := result.ContentType
+		if contentType == "" {
+			contentType = "application/octet-stream"
+		}
+		ctx.Data(result.StatusCode, contentType, result.Body)
+		return
+	}
+
+	var uploadResponse models.PdfGeneratorUploadResponse
+	if err := json.Unmarshal(result.Body, &uploadResponse); err != nil {
+		ctx.JSON(http.StatusBadGateway, gin.H{"error": fmt.Sprintf("failed to parse pdf-generator response: %v", err)})
+		return
+	}
+
+	saveResult, err := c.saveController.Save(ctx.Request.Context(), models.PdfSaveRequest{
+		UploadedFiles: uploadResponse.UploadedFiles,
+	})
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, gin.H{
+		"success":       uploadResponse.Success,
+		"message":       uploadResponse.Message,
+		"uploadedFiles": uploadResponse.UploadedFiles,
+		"savedCount":    saveResult.SavedCount,
+	})
 }

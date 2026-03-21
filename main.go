@@ -28,12 +28,14 @@ func main() {
 	mblRepo := repository.NewMBLRepository(db)
 	mblCacheRepo := repository.NewMBLCacheRepository(db)
 	hblRepo := repository.NewHBLRepository(db)
+	hblDocRepo := repository.NewHBLDocRepository(db)
 	bookingRepo := repository.NewBookingRepository(db)
 	shipmentRepo := repository.NewShipmentRepository(db)
 	shipperRepo := repository.NewShipperRepository(db)
 
 	// 4. Initialize Services (Manual DI)
 	pdfService := services.NewPdfGeneratorService(pdfBaseURL)
+	pdfSaveService := services.NewPdfSaveService(hblDocRepo)
 	docConvertService := services.NewDocumentConvertService(
 		extractionBaseURL, mblRepo, mblCacheRepo, bookingRepo, shipmentRepo, shipperRepo,
 	)
@@ -51,7 +53,7 @@ func main() {
 	r.Use(cors.New(corsConfig))
 
 	// 6. Register Routes
-	routes.RegisterRoutes(r, pdfService, docConvertService, docPreviewService)
+	routes.RegisterRoutes(r, pdfService, pdfSaveService, docConvertService, docPreviewService)
 
 	// 7. Start Server
 	log.Println("Server starting on " + port)

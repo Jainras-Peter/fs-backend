@@ -14,6 +14,7 @@ type HBLRepository interface {
 	InsertHBL(ctx context.Context, doc *hbl_schema.HBLDocument) error
 	UpdateHBL(ctx context.Context, hblNumber string, data hbl_schema.HBLData) error
 	FindByHBLNumber(ctx context.Context, hblNumber string) (*hbl_schema.HBLDocument, error)
+	CountTotal(ctx context.Context) (int64, error)
 }
 
 type hblRepository struct {
@@ -45,4 +46,8 @@ func (r *hblRepository) FindByHBLNumber(ctx context.Context, hblNumber string) (
 	var doc hbl_schema.HBLDocument
 	err := r.collection.FindOne(ctx, filter).Decode(&doc)
 	return &doc, err
+}
+
+func (r *hblRepository) CountTotal(ctx context.Context) (int64, error) {
+	return r.collection.CountDocuments(ctx, bson.M{})
 }

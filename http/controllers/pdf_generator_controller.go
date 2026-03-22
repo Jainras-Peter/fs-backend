@@ -7,6 +7,7 @@ import (
 	"fs-backend/services"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,15 +22,21 @@ func NewPdfGeneratorController(service services.PdfGeneratorService, saveControl
 }
 
 func (c *PdfGeneratorController) Generate(ctx *gin.Context) {
+	documentTo := strings.TrimSpace(ctx.Query("documentTo"))
+	if documentTo == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "documentTo query parameter is required"})
+		return
+	}
+
 	var req models.PdfGenerationRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	log.Printf("pdf-generator request received: mbl_number=%s total_count=%d hbl_count=%d", req.MBLNumber, req.TotalCount, len(req.HBLList))
+	log.Printf("pdf-generator request received: mbl_number=%s total_count=%d hbl_count=%d documentTo=%s", req.MBLNumber, req.TotalCount, len(req.HBLList), documentTo)
 
-	result, err := c.service.Generate(ctx.Request.Context(), req)
+	result, err := c.service.Generate(ctx.Request.Context(), req, documentTo)
 	if err != nil {
 		ctx.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return

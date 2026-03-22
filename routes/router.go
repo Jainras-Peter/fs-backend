@@ -19,7 +19,6 @@ func RegisterRoutes(router *gin.Engine, pdfService services.PdfGeneratorService,
 		api.POST("/convert/mbl", docConvertController.ConvertMBL)
 		api.POST("/preview/hbl", docPreviewController.PreviewHBL)
 		api.PUT("/hbl/:hbl_number", docPreviewController.UpdateHBL)
-
 	}
 
 	bookingApi := router.Group("/api/booking")

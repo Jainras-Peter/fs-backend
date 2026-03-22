@@ -9,13 +9,14 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"fs-backend/models"
 )
 
 type PdfGeneratorService interface {
-	Generate(ctx context.Context, payload models.PdfGenerationRequest) (*models.PdfGeneratorResult, error)
+	Generate(ctx context.Context, payload models.PdfGenerationRequest, documentTo string) (*models.PdfGeneratorResult, error)
 }
 
 type pdfGeneratorService models.PdfGeneratorService
@@ -27,9 +28,12 @@ func NewPdfGeneratorService(baseURL string) PdfGeneratorService {
 	}
 }
 
-func (s *pdfGeneratorService) Generate(ctx context.Context, payload models.PdfGenerationRequest) (*models.PdfGeneratorResult, error) {
+func (s *pdfGeneratorService) Generate(ctx context.Context, payload models.PdfGenerationRequest, documentTo string) (*models.PdfGeneratorResult, error) {
 	if s.BaseURL == "" {
 		return nil, errors.New("pdf service base URL is not configured")
+	}
+	if strings.TrimSpace(documentTo) == "" {
+		return nil, errors.New("documentTo is required")
 	}
 	if payload.MBLNumber == "" {
 		return nil, errors.New("mbl_number is required")
@@ -47,10 +51,18 @@ func (s *pdfGeneratorService) Generate(ctx context.Context, payload models.PdfGe
 	if err != nil {
 		return nil, err
 	}
+	u, err := url.Parse(endpoint)
+	if err != nil {
+		return nil, err
+	}
+	q := u.Query()
+	q.Set("documentTo", documentTo)
+	u.RawQuery = q.Encode()
+	finalURL := u.String()
 
-	log.Printf("forwarding pdf generation request to %s (mbl_number=%s, hbl_count=%d)", endpoint, payload.MBLNumber, len(payload.HBLList))
+	log.Printf("forwarding pdf generation request to %s (mbl_number=%s, hbl_count=%d, documentTo=%s)", finalURL, payload.MBLNumber, len(payload.HBLList), documentTo)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, finalURL, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
 	}

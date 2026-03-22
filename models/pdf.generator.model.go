@@ -91,6 +91,7 @@ type PdfGeneratorService struct {
 
 type PdfGeneratorUploadedFile struct {
 	Filename string `json:"filename"`
+	Type     string `json:"type"`
 	URL      string `json:"url"`
 }
 

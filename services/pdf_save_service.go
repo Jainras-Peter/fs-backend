@@ -29,6 +29,7 @@ func (s *pdfSaveService) Save(ctx context.Context, req models.PdfSaveRequest) (*
 
 		docs = append(docs, models.HBLDoc{
 			Filename: file.Filename,
+			Type:     file.Type,
 			URL:      file.URL,
 		})
 	}

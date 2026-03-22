@@ -9,6 +9,7 @@ import (
 type HBLDoc struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
 	Filename  string             `bson:"filename" json:"filename"`
+	Type      string             `bson:"type" json:"type"` // "hbl" or "any other document type"
 	URL       string             `bson:"url" json:"url"`
 	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
 	UpdatedAt time.Time          `bson:"updated_at" json:"updated_at"`

@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(router *gin.Engine, pdfService services.PdfGeneratorService, pdfSaveService services.PdfSaveService, docConvertService services.DocumentConvertService, docPreviewService services.DocumentPreviewService, bookingController *controllers.BookingController, shipmentController *controllers.ShipmentController) {
+func RegisterRoutes(router *gin.Engine, pdfService services.PdfGeneratorService, pdfSaveService services.PdfSaveService, docConvertService services.DocumentConvertService, docPreviewService services.DocumentPreviewService, bookingController *controllers.BookingController, shipmentController *controllers.ShipmentController, dashboardController *controllers.DashboardController) {
 	pdfSaveController := controllers.NewPdfSaveController(pdfSaveService)
 	pdfController := controllers.NewPdfGeneratorController(pdfService, pdfSaveController)
 	docConvertController := controllers.NewDocumentConvertController(docConvertService)
@@ -42,5 +42,11 @@ func RegisterRoutes(router *gin.Engine, pdfService services.PdfGeneratorService,
 
 		//Sync MBL Number
 		bookingApi.POST("/syncBooking", bookingController.SyncBooking)
+	}
+
+	dashboardApi := router.Group("/api/dashboard")
+	{
+		dashboardApi.GET("/details", dashboardController.GetDetails)
+		dashboardApi.DELETE("/delete/:id", dashboardController.DeleteDocument)
 	}
 }

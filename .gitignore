@@ -1,4 +1,6 @@
 config/config.yaml
+.config.yaml
+config.yaml
 tmp/
 
 # local env files

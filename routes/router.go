@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(router *gin.Engine, pdfService services.PdfGeneratorService, pdfSaveService services.PdfSaveService, docConvertService services.DocumentConvertService, docPreviewService services.DocumentPreviewService, bookingController *controllers.BookingController, shipmentController *controllers.ShipmentController, dashboardController *controllers.DashboardController) {
+func RegisterRoutes(router *gin.Engine, pdfService services.PdfGeneratorService, pdfSaveService services.PdfSaveService, docConvertService services.DocumentConvertService, docPreviewService services.DocumentPreviewService, bookingController *controllers.BookingController, shipmentController *controllers.ShipmentController, dashboardController *controllers.DashboardController, authController controllers.AuthController) {
 	pdfSaveController := controllers.NewPdfSaveController(pdfSaveService)
 	pdfController := controllers.NewPdfGeneratorController(pdfService, pdfSaveController)
 	docConvertController := controllers.NewDocumentConvertController(docConvertService)
@@ -20,6 +20,13 @@ func RegisterRoutes(router *gin.Engine, pdfService services.PdfGeneratorService,
 		api.POST("/preview/hbl", docPreviewController.PreviewHBL)
 		api.PUT("/hbl/:hbl_number", docPreviewController.UpdateHBL)
 		api.POST("/hbl-docs/download-archive", controllers.DownloadHBLDocsArchive)
+	}
+
+	usersAPI := router.Group("/api/users")
+	{
+		usersAPI.POST("/signup", authController.Signup)
+		usersAPI.POST("/login", authController.Login)
+		usersAPI.POST("/logout", authController.Logout)
 	}
 
 	bookingApi := router.Group("/api/booking")

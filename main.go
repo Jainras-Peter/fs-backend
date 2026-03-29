@@ -33,6 +33,7 @@ func main() {
 	bookingRepo := repository.NewBookingRepository(db)
 	shipmentRepo := repository.NewShipmentRepository(db)
 	shipperRepo := repository.NewShipperRepository(db)
+	forwarderRepo := repository.NewForwarderRepository(db)
 
 	// 4. Initialize Services (Manual DI)
 	pdfService := services.NewPdfGeneratorService(pdfBaseURL)
@@ -46,11 +47,13 @@ func main() {
 	bookingService := services.NewBookingService(shipperRepo, bookingRepo)
 	shipmentService := services.NewShipmentService(shipmentRepo, bookingRepo, shipperRepo)
 	dashboardService := services.NewDashboardService(hblDocRepo, hblRepo)
+	forwarderService := services.NewForwarderService(forwarderRepo)
 
 	// Initialize Controllers
 	bookingController := controllers.NewBookingController(bookingService)
 	shipmentController := controllers.NewShipmentController(shipmentService)
 	dashboardController := controllers.NewDashboardController(dashboardService)
+	authController := controllers.NewAuthController(forwarderService)
 
 	// 5. Initialize Router
 	r := gin.Default()
@@ -62,7 +65,7 @@ func main() {
 	r.Use(cors.New(corsConfig))
 
 	// 6. Register Routes
-	routes.RegisterRoutes(r, pdfService, pdfSaveService, docConvertService, docPreviewService, bookingController, shipmentController, dashboardController)
+	routes.RegisterRoutes(r, pdfService, pdfSaveService, docConvertService, docPreviewService, bookingController, shipmentController, dashboardController, authController)
 
 	// 7. Start Server
 	log.Println("Server starting on " + port)

@@ -11,15 +11,21 @@ import (
 
 // ShipmentDocument represents a document in the "shipments" collection
 type ShipmentDocument struct {
-	ShipmentID       string  `bson:"shipment_id" json:"shipment_id"`
-	ShipperID        string  `bson:"shipper_id" json:"shipper_id"`
-	GoodsDescription string  `bson:"goods_description" json:"goods_description"`
-	PackagesCount    int     `bson:"packages_count" json:"packages_count"`
-	GrossWeight      float64 `bson:"gross_weight" json:"gross_weight"`
-	NetWeight        float64 `bson:"net_weight" json:"net_weight"`
-	Volume           float64 `bson:"volume" json:"volume"`
-	MarksAndNumbers  string  `bson:"marks_and_numbers" json:"marks_and_numbers"`
-	Measurement      string  `bson:"measurement" json:"measurement"`
+	ShipmentID          string  `bson:"shipment_id" json:"shipment_id"`
+	ShipperID           string  `bson:"shipper_id" json:"shipper_id"`
+	Mode                string  `bson:"mode" json:"mode"`
+	CargoType           string  `bson:"cargo_type" json:"cargo_type"`
+	GoodsDescription    string  `bson:"goods_description" json:"goods_description"`
+	PackagesCount       int     `bson:"packages_count" json:"packages_count"`
+	GrossWeight         float64 `bson:"gross_weight" json:"gross_weight"`
+	NetWeight           float64 `bson:"net_weight" json:"net_weight"`
+	Volume              float64 `bson:"volume" json:"volume"`
+	MarksAndNumbers     string  `bson:"marks_and_numbers" json:"marks_and_numbers"`
+	Measurement         string  `bson:"measurement" json:"measurement"`
+	Origin              string  `bson:"origin" json:"origin"`
+	Destination         string  `bson:"destination" json:"destination"`
+	DesiredDeliveryDate string  `bson:"desired_delivery_date" json:"desired_delivery_date"`
+	SpecialRequirements string  `bson:"special_requirements" json:"special_requirements"`
 }
 
 // ShipmentRepository defines read operations on the "shipments" collection

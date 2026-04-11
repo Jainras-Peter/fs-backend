@@ -19,9 +19,9 @@ type BookingService interface {
 }
 
 type bookingService struct {
-	shipperRepo    repository.ShipperRepository
-	bookingRepo    repository.BookingRepository
-	shipmentRepo   repository.ShipmentRepository
+	shipperRepo  repository.ShipperRepository
+	bookingRepo  repository.BookingRepository
+	shipmentRepo repository.ShipmentRepository
 }
 
 func NewBookingService(shipperRepo repository.ShipperRepository, bookingRepo repository.BookingRepository, shipmentRepo repository.ShipmentRepository) BookingService {
@@ -68,10 +68,10 @@ func (s *bookingService) SyncBooking(ctx context.Context, mblNumber, shipmentID,
 	}
 
 	booking, err := s.bookingRepo.FindByMBLNumber(ctx, mblNumber)
-	
+
 	if err == nil && booking != nil {
 		// Booking exists - validate mode compatibility
-		
+
 		// If booking has no mode set (shouldn't happen but handle it), update it now
 		if booking.Mode == "" {
 			// This booking was created without a mode, set it now from the first shipment
@@ -82,17 +82,16 @@ func (s *bookingService) SyncBooking(ctx context.Context, mblNumber, shipmentID,
 		if booking.Mode == "FCL" {
 			return errors.New("MBL synced with FCL - cannot add more shipments")
 		}
-		
+
 		// Rule 2: If existing booking is LCL and new shipment is FCL, reject
 		if booking.Mode == "LCL" && shipmentMode == "FCL" {
 			return errors.New("MBL is synced with LCL - cannot add FCL shipment")
 		}
-		
-		
+
 		// All validations passed, append shipment to existing booking
 		return s.bookingRepo.AddShipmentToBooking(ctx, mblNumber, shipmentID)
 	}
-	
+
 	// If booking doesn't exist, create it with new details
 	newBooking := &repository.BookingDocument{
 		MBLNumber:          mblNumber,

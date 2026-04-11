@@ -92,9 +92,9 @@ func (c *BookingController) SyncBooking(ctx *gin.Context) {
 	var input struct {
 		MBLNumber          string `json:"mbl_number" binding:"required"`
 		ShipmentID         string `json:"shipment_id" binding:"required"`
-		CarrierName        string  `json:"carrier_name"`
-		EstimatedDeparture string  `json:"estimated_departure"`
-		EstimatedArrival   string  `json:"estimated_arrival"`
+		CarrierName        string `json:"carrier_name"`
+		EstimatedDeparture string `json:"estimated_departure"`
+		EstimatedArrival   string `json:"estimated_arrival"`
 	}
 
 	if err := ctx.ShouldBindJSON(&input); err != nil {

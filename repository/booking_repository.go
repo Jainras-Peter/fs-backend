@@ -11,15 +11,15 @@ import (
 
 // BookingDocument represents a document in the "Booking" collection
 type BookingDocument struct {
-	ID                   primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	MBLNumber            string             `bson:"mbl_number" json:"mbl_number"`
-	ShipmentIDs          []string           `bson:"shipment_ids" json:"shipment_ids"`
-	Mode                 string             `bson:"mode" json:"mode"`                                    // FCL or LCL
-	CarrierName          string             `bson:"carrier_name" json:"carrier_name"`
-	EstimatedDeparture   string             `bson:"estimated_departure" json:"estimated_departure"`
-	EstimatedArrival     string             `bson:"estimated_arrival" json:"estimated_arrival"`
-	Status               string             `bson:"status" json:"status"`
-	CreatedAt            time.Time          `bson:"created_at" json:"created_at"`
+	ID                 primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	MBLNumber          string             `bson:"mbl_number" json:"mbl_number"`
+	ShipmentIDs        []string           `bson:"shipment_ids" json:"shipment_ids"`
+	Mode               string             `bson:"mode" json:"mode"` // FCL or LCL
+	CarrierName        string             `bson:"carrier_name" json:"carrier_name"`
+	EstimatedDeparture string             `bson:"estimated_departure" json:"estimated_departure"`
+	EstimatedArrival   string             `bson:"estimated_arrival" json:"estimated_arrival"`
+	Status             string             `bson:"status" json:"status"`
+	CreatedAt          time.Time          `bson:"created_at" json:"created_at"`
 }
 
 // BookingRepository defines read operations on the "Booking" collection
@@ -89,7 +89,7 @@ func (r *bookingRepository) GetAllBookings(ctx context.Context) ([]BookingDocume
 	if err := cursor.All(ctx, &bookings); err != nil {
 		return nil, err
 	}
-	
+
 	if bookings == nil {
 		bookings = []BookingDocument{}
 	}

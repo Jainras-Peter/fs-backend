@@ -13,6 +13,7 @@ type ForwarderRepository interface {
 	Create(ctx context.Context, forwarder *models.Forwarder) error
 	FindByUsername(ctx context.Context, username string) (*models.Forwarder, error)
 	GetNextForwarderID(ctx context.Context) (string, error)
+	UpdateByUsername(ctx context.Context, username string, update bson.M) error
 }
 
 type forwarderRepository struct {
@@ -49,4 +50,9 @@ func (r *forwarderRepository) GetNextForwarderID(ctx context.Context) (string, e
 	}
 	// e.g., FWD001, FWD002
 	return fmt.Sprintf("FWD%03d", count+1), nil
+}
+
+func (r *forwarderRepository) UpdateByUsername(ctx context.Context, username string, update bson.M) error {
+	_, err := r.collection.UpdateOne(ctx, bson.M{"username": username}, bson.M{"$set": update})
+	return err
 }

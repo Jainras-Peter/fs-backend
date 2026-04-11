@@ -9,12 +9,15 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"go.mongodb.org/mongo-driver/bson"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type ForwarderService interface {
 	Signup(ctx context.Context, forwarder *models.Forwarder) error
 	Login(ctx context.Context, username, password string) (string, error)
+	GetForwarderDetails(ctx context.Context, username string) (*models.Forwarder, error)
+	UpdateForwarderDetails(ctx context.Context, username string, forwarder *models.Forwarder) error
 }
 
 type forwarderService struct {
@@ -90,4 +93,27 @@ func (s *forwarderService) Login(ctx context.Context, username, password string)
 	}
 
 	return tokenString, nil
+}
+
+func (s *forwarderService) GetForwarderDetails(ctx context.Context, username string) (*models.Forwarder, error) {
+	forwarder, err := s.repo.FindByUsername(ctx, username)
+	if err != nil {
+		return nil, err
+	}
+	if forwarder == nil {
+		return nil, nil
+	}
+	forwarder.Password = ""
+	return forwarder, nil
+}
+
+func (s *forwarderService) UpdateForwarderDetails(ctx context.Context, username string, forwarder *models.Forwarder) error {
+	update := bson.M{
+		"companyName":     forwarder.ForwarderCompanyName,
+		"phone":           forwarder.ContactPhone,
+		"email":           forwarder.Email,
+		"address":         forwarder.FullAddress,
+		"defaultLanguage": forwarder.DefaultLanguage,
+	}
+	return s.repo.UpdateByUsername(ctx, username, update)
 }

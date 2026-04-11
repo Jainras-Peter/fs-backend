@@ -27,6 +27,8 @@ func RegisterRoutes(router *gin.Engine, pdfService services.PdfGeneratorService,
 		usersAPI.POST("/signup", authController.Signup)
 		usersAPI.POST("/login", authController.Login)
 		usersAPI.POST("/logout", authController.Logout)
+		usersAPI.GET("/getforwarderdetails", authController.GetForwarderDetails)
+		usersAPI.PUT("/updateforwarderdetails/:username", authController.UpdateForwarderDetails)
 	}
 
 	bookingApi := router.Group("/api/booking")

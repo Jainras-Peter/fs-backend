@@ -13,7 +13,7 @@ type BookingService interface {
 	GetShipperList(ctx context.Context) ([]repository.ShipperDocument, error)
 	UpdateShipper(ctx context.Context, id primitive.ObjectID, updates map[string]interface{}) error
 	DeleteShipper(ctx context.Context, id primitive.ObjectID) error
-	SyncBooking(ctx context.Context, mblNumber, shipmentID, carrierName, estimatedDeparture, estimatedArrival string) error
+	SyncBooking(ctx context.Context, mblNumber, mode string, shipmentIDs []string, carrierName, estimatedDeparture, estimatedArrival string) error
 	GetStatusDetails(ctx context.Context) ([]repository.BookingDocument, error)
 	UpdateStatus(ctx context.Context, id primitive.ObjectID, status string) error
 }
@@ -54,49 +54,66 @@ func (s *bookingService) DeleteShipper(ctx context.Context, id primitive.ObjectI
 	return err
 }
 
-func (s *bookingService) SyncBooking(ctx context.Context, mblNumber, shipmentID, carrierName, estimatedDeparture, estimatedArrival string) error {
-	// Fetch the shipment to get its mode
-	shipments, err := s.shipmentRepo.FindByShipmentIDs(ctx, []string{shipmentID})
+func (s *bookingService) SyncBooking(ctx context.Context, mblNumber, mode string, shipmentIDs []string, carrierName, estimatedDeparture, estimatedArrival string) error {
+	if len(shipmentIDs) == 0 {
+		return errors.New("No shipments selected for booking")
+	}
+
+	if mode != "FCL" && mode != "LCL" {
+		return errors.New("Invalid mode. Please select FCL or LCL.")
+	}
+
+	if mode == "FCL" && len(shipmentIDs) > 1 {
+		return errors.New("FCL booking can only have one shipment")
+	}
+
+	if mode == "LCL" && len(shipmentIDs) > 5 {
+		return errors.New("LCL booking can have at most 5 shipments")
+	}
+
+	// Fetch shipments to validate them
+	shipments, err := s.shipmentRepo.FindByShipmentIDs(ctx, shipmentIDs)
 	if err != nil || len(shipments) == 0 {
 		return errors.New("Shipment not found")
 	}
-	shipmentMode := shipments[0].Mode // FCL or LCL
 
-	// Validate that shipment has a mode set
-	if shipmentMode == "" {
-		return errors.New("Shipment mode is not set. Please set the mode (FCL/LCL) before syncing.")
+	for _, shipment := range shipments {
+		if shipment.Mode == "" {
+			return errors.New("All shipments must have a mode set before syncing")
+		}
+		if shipment.Mode != mode {
+			return errors.New("Selected shipment modes do not match the chosen booking mode")
+		}
 	}
 
 	booking, err := s.bookingRepo.FindByMBLNumber(ctx, mblNumber)
 
 	if err == nil && booking != nil {
-		// Booking exists - validate mode compatibility
-
-		// If booking has no mode set (shouldn't happen but handle it), update it now
 		if booking.Mode == "" {
-			// This booking was created without a mode, set it now from the first shipment
 			return errors.New("MBL exists but mode is not set. Cannot proceed. Please delete and recreate the booking.")
 		}
 
-		// Rule 1: If existing booking is FCL, can't add more shipments
 		if booking.Mode == "FCL" {
 			return errors.New("MBL synced with FCL - cannot add more shipments")
 		}
 
-		// Rule 2: If existing booking is LCL and new shipment is FCL, reject
-		if booking.Mode == "LCL" && shipmentMode == "FCL" {
+		if booking.Mode == "LCL" && mode == "FCL" {
 			return errors.New("MBL is synced with LCL - cannot add FCL shipment")
 		}
 
-		// All validations passed, append shipment to existing booking
-		return s.bookingRepo.AddShipmentToBooking(ctx, mblNumber, shipmentID)
+		for _, shipmentID := range shipmentIDs {
+			if err := s.bookingRepo.AddShipmentToBooking(ctx, mblNumber, shipmentID); err != nil {
+				return err
+			}
+		}
+
+		return nil
 	}
 
-	// If booking doesn't exist, create it with new details
 	newBooking := &repository.BookingDocument{
 		MBLNumber:          mblNumber,
-		ShipmentIDs:        []string{shipmentID},
-		Mode:               shipmentMode,
+		ShipmentIDs:        shipmentIDs,
+		Mode:               mode,
 		CarrierName:        carrierName,
 		EstimatedDeparture: estimatedDeparture,
 		EstimatedArrival:   estimatedArrival,

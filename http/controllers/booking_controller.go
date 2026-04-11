@@ -90,11 +90,12 @@ func (c *BookingController) DeleteShipper(ctx *gin.Context) {
 
 func (c *BookingController) SyncBooking(ctx *gin.Context) {
 	var input struct {
-		MBLNumber          string `json:"mbl_number" binding:"required"`
-		ShipmentID         string `json:"shipment_id" binding:"required"`
-		CarrierName        string `json:"carrier_name"`
-		EstimatedDeparture string `json:"estimated_departure"`
-		EstimatedArrival   string `json:"estimated_arrival"`
+		MBLNumber          string   `json:"mbl_number" binding:"required"`
+		Mode               string   `json:"mode" binding:"required"`
+		ShipmentIDs        []string `json:"shipment_ids" binding:"required"`
+		CarrierName        string   `json:"carrier_name"`
+		EstimatedDeparture string   `json:"estimated_departure"`
+		EstimatedArrival   string   `json:"estimated_arrival"`
 	}
 
 	if err := ctx.ShouldBindJSON(&input); err != nil {
@@ -105,13 +106,13 @@ func (c *BookingController) SyncBooking(ctx *gin.Context) {
 	err := c.bookingService.SyncBooking(
 		ctx.Request.Context(),
 		input.MBLNumber,
-		input.ShipmentID,
+		input.Mode,
+		input.ShipmentIDs,
 		input.CarrierName,
 		input.EstimatedDeparture,
 		input.EstimatedArrival,
 	)
 	if err != nil {
-		// Return the exact error message to the frontend
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}

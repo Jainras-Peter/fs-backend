@@ -44,7 +44,7 @@ func main() {
 	docPreviewService := services.NewDocumentPreviewService(
 		mblRepo, hblRepo, shipmentRepo, shipperRepo,
 	)
-	bookingService := services.NewBookingService(shipperRepo, bookingRepo)
+	bookingService := services.NewBookingService(shipperRepo, bookingRepo, shipmentRepo)
 	shipmentService := services.NewShipmentService(shipmentRepo, bookingRepo, shipperRepo)
 	dashboardService := services.NewDashboardService(hblDocRepo, hblRepo)
 	forwarderService := services.NewForwarderService(forwarderRepo)

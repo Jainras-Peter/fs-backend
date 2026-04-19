@@ -67,6 +67,11 @@ func main() {
 	// 6. Register Routes
 	routes.RegisterRoutes(r, pdfService, pdfSaveService, docConvertService, docPreviewService, bookingController, shipmentController, dashboardController, authController)
 
+	// Health check endpoint
+	r.GET("/health", func(c *gin.Context) {
+		c.String(200, "server is alive!")
+	})
+
 	// 7. Start Server
 	log.Println("Server starting on " + port)
 	if err := r.Run(port); err != nil {

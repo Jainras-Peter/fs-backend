@@ -79,6 +79,10 @@ func main() {
 		c.String(200, "server is alive!")
 	})
 
+	r.HEAD("/health", func(c *gin.Context) {
+	c.Status(200)
+})
+
 	// 7. Start Server
 	log.Println("Server starting on " + port)
 	if err := r.Run(port); err != nil {

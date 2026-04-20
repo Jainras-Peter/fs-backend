@@ -8,6 +8,7 @@ import (
 	"fs-backend/routes"
 	"fs-backend/services"
 	"log"
+	"strings"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -17,6 +18,9 @@ func main() {
 	// 1. Initialize Configuration
 	config.Init()
 	port := config.GetString("server.port")
+	if port != "" && !strings.HasPrefix(port, ":") {
+		port = ":" + port
+	}
 	pdfBaseURL := config.GetString("pdf_service.base_url")
 	mongoURI := config.GetString("mongo.uri")
 	mongoDBName := config.GetString("mongo.database")

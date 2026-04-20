@@ -59,7 +59,10 @@ func main() {
 	r := gin.Default()
 
 	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowOrigins = []string{"http://localhost:4200"}
+	corsConfig.AllowOrigins = []string{
+		"http://localhost:4200",
+		"https://freightdocs-one.vercel.app",
+	}
 	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
 	corsConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type"}
 	r.Use(cors.New(corsConfig))

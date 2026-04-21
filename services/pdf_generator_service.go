@@ -17,6 +17,7 @@ import (
 
 type PdfGeneratorService interface {
 	Generate(ctx context.Context, payload models.PdfGenerationRequest, documentTo string) (*models.PdfGeneratorResult, error)
+	GenerateTemplate(ctx context.Context, payload models.TemplateGenerationRequest) (*models.TemplateGeneratorResult, error)
 }
 
 type pdfGeneratorService models.PdfGeneratorService
@@ -24,7 +25,7 @@ type pdfGeneratorService models.PdfGeneratorService
 func NewPdfGeneratorService(baseURL string) PdfGeneratorService {
 	return &pdfGeneratorService{
 		BaseURL: baseURL,
-		Client:  &http.Client{Timeout: 30 * time.Second},
+		Client:  &http.Client{Timeout: 120 * time.Second},
 	}
 }
 
@@ -82,6 +83,47 @@ func (s *pdfGeneratorService) Generate(ctx context.Context, payload models.PdfGe
 	log.Printf("pdf generation response status=%d content_type=%s", resp.StatusCode, resp.Header.Get("Content-Type"))
 
 	return &models.PdfGeneratorResult{
+		StatusCode:  resp.StatusCode,
+		ContentType: resp.Header.Get("Content-Type"),
+		Body:        respBody,
+	}, nil
+}
+
+func (s *pdfGeneratorService) GenerateTemplate(ctx context.Context, payload models.TemplateGenerationRequest) (*models.TemplateGeneratorResult, error) {
+	if s.BaseURL == "" {
+		return nil, errors.New("pdf service base URL is not configured")
+	}
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	endpoint, err := url.JoinPath(s.BaseURL, "api", "v1", "generate-template")
+	if err != nil {
+		return nil, err
+	}
+
+	log.Printf("forwarding template generation request to %s (template=%s, filename=%s)", endpoint, payload.TemplateType, payload.Filename)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := s.Client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.TemplateGeneratorResult{
 		StatusCode:  resp.StatusCode,
 		ContentType: resp.Header.Get("Content-Type"),
 		Body:        respBody,

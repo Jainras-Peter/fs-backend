@@ -11,7 +11,7 @@ import (
 )
 
 type InfoToDocService interface {
-	ProcessBillOfLading(ctx context.Context, req models.InfoToDocCreateRequest) (string, error)
+	ProcessTemplate(ctx context.Context, req models.InfoToDocCreateRequest) (string, error)
 }
 
 type infoToDocService struct {
@@ -28,8 +28,8 @@ func NewInfoToDocService(infoRepo repository.InfoToDocRepository, hblDocRepo rep
 	}
 }
 
-func (s *infoToDocService) ProcessBillOfLading(ctx context.Context, req models.InfoToDocCreateRequest) (string, error) {
-	if req.Template != "BillOfLading" {
+func (s *infoToDocService) ProcessTemplate(ctx context.Context, req models.InfoToDocCreateRequest) (string, error) {
+	if req.Template != "BillOfLading" && req.Template != "CommercialInvoice" {
 		return "", errors.New("invalid template type")
 	}
 
@@ -76,9 +76,14 @@ func (s *infoToDocService) ProcessBillOfLading(ctx context.Context, req models.I
 	docURL := genResp.UploadedFiles[0].Url
 
 	// 1. Save to info-to-doc
+	docType := "Bill of Lading"
+	if req.Template == "CommercialInvoice" {
+		docType = "Commercial Invoice"
+	}
+
 	infoDoc := &models.InfoToDoc{
 		Filename:  req.Filename,
-		Type:      "Bill of Lading",
+		Type:      docType,
 		Data:      req.Data,
 		URL:       docURL,
 		CreatedAt: time.Now(),
@@ -93,7 +98,7 @@ func (s *infoToDocService) ProcessBillOfLading(ctx context.Context, req models.I
 	hblDoc := models.HBLDoc{
 		Filename: req.Filename, // using reference name for now as requested
 		URL:      docURL,
-		Type:     "Bill of Lading",
+		Type:     docType,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}

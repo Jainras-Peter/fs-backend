@@ -61,6 +61,6 @@ func RegisterRoutes(router *gin.Engine, pdfService services.PdfGeneratorService,
 
 	infotodocApi := router.Group("/api/infotodoc")
 	{
-		infotodocApi.POST("/billoflading", infoToDocController.HandleBillOfLading)
+		infotodocApi.POST("/template", infoToDocController.HandleTemplate)
 	}
 }

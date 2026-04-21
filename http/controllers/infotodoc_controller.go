@@ -16,7 +16,7 @@ func NewInfoToDocController(service services.InfoToDocService) *InfoToDocControl
 	return &InfoToDocController{service: service}
 }
 
-func (c *InfoToDocController) HandleBillOfLading(ctx *gin.Context) {
+func (c *InfoToDocController) HandleTemplate(ctx *gin.Context) {
 	var req models.InfoToDocCreateRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload", "details": err.Error()})
@@ -28,7 +28,7 @@ func (c *InfoToDocController) HandleBillOfLading(ctx *gin.Context) {
 		return
 	}
 
-	docURL, err := c.service.ProcessBillOfLading(ctx.Request.Context(), req)
+	docURL, err := c.service.ProcessTemplate(ctx.Request.Context(), req)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process document", "details": err.Error()})
 		return

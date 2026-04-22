@@ -29,7 +29,7 @@ func NewInfoToDocService(infoRepo repository.InfoToDocRepository, hblDocRepo rep
 }
 
 func (s *infoToDocService) ProcessTemplate(ctx context.Context, req models.InfoToDocCreateRequest) (string, error) {
-	if req.Template != "BillOfLading" && req.Template != "CommercialInvoice" {
+	if req.Template != "BillOfLading" && req.Template != "CommercialInvoice" && req.Template != "Quotation" && req.Template != "BillOfExchange" {
 		return "", errors.New("invalid template type")
 	}
 
@@ -79,6 +79,10 @@ func (s *infoToDocService) ProcessTemplate(ctx context.Context, req models.InfoT
 	docType := "Bill of Lading"
 	if req.Template == "CommercialInvoice" {
 		docType = "Commercial Invoice"
+	} else if req.Template == "Quotation" {
+		docType = "Quotation"
+	} else if req.Template == "BillOfExchange" {
+		docType = "Bill of Exchange"
 	}
 
 	infoDoc := &models.InfoToDoc{

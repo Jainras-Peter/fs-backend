@@ -13,6 +13,7 @@ import (
 type MBLCacheDocument struct {
 	ID            primitive.ObjectID     `bson:"_id,omitempty"`
 	FileHash      string                 `bson:"file_hash"`
+	Engine        string                 `bson:"engine"`
 	MBLNumber     string                 `bson:"mbl_number"`
 	ExtractedData map[string]interface{} `bson:"extracted_data"`
 	CreatedAt     time.Time              `bson:"created_at"`
@@ -20,7 +21,7 @@ type MBLCacheDocument struct {
 
 // MBLCacheRepository defines operations on the "MBL_Cache" collection
 type MBLCacheRepository interface {
-	FindByFileHash(ctx context.Context, fileHash string) (*MBLCacheDocument, error)
+	FindByFileHashAndEngine(ctx context.Context, fileHash, engine string) (*MBLCacheDocument, error)
 	Insert(ctx context.Context, doc *MBLCacheDocument) error
 }
 
@@ -35,9 +36,12 @@ func NewMBLCacheRepository(db *mongo.Database) MBLCacheRepository {
 	}
 }
 
-func (r *mblCacheRepository) FindByFileHash(ctx context.Context, fileHash string) (*MBLCacheDocument, error) {
+func (r *mblCacheRepository) FindByFileHashAndEngine(ctx context.Context, fileHash, engine string) (*MBLCacheDocument, error) {
 	var doc MBLCacheDocument
-	err := r.collection.FindOne(ctx, bson.M{"file_hash": fileHash}).Decode(&doc)
+	err := r.collection.FindOne(ctx, bson.M{
+		"file_hash": fileHash,
+		"engine":    engine,
+	}).Decode(&doc)
 	if err != nil {
 		return nil, err
 	}

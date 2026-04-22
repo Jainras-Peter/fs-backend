@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(router *gin.Engine, pdfService services.PdfGeneratorService, pdfSaveService services.PdfSaveService, docConvertService services.DocumentConvertService, docPreviewService services.DocumentPreviewService, bookingController *controllers.BookingController, shipmentController *controllers.ShipmentController, dashboardController *controllers.DashboardController, authController controllers.AuthController) {
+func RegisterRoutes(router *gin.Engine, pdfService services.PdfGeneratorService, pdfSaveService services.PdfSaveService, docConvertService services.DocumentConvertService, docPreviewService services.DocumentPreviewService, bookingController *controllers.BookingController, shipmentController *controllers.ShipmentController, dashboardController *controllers.DashboardController, authController controllers.AuthController, infoToDocController *controllers.InfoToDocController) {
 	pdfSaveController := controllers.NewPdfSaveController(pdfSaveService)
 	pdfController := controllers.NewPdfGeneratorController(pdfService, pdfSaveController)
 	docConvertController := controllers.NewDocumentConvertController(docConvertService)
@@ -57,5 +57,10 @@ func RegisterRoutes(router *gin.Engine, pdfService services.PdfGeneratorService,
 	{
 		dashboardApi.GET("/details", dashboardController.GetDetails)
 		dashboardApi.DELETE("/delete/:id", dashboardController.DeleteDocument)
+	}
+
+	infotodocApi := router.Group("/api/infotodoc")
+	{
+		infotodocApi.POST("/template", infoToDocController.HandleTemplate)
 	}
 }

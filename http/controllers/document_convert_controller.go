@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"io"
 	"net/http"
 
@@ -20,7 +21,7 @@ func NewDocumentConvertController(service services.DocumentConvertService) *Docu
 }
 
 // ConvertMBL handles POST /api/v1/convert/mbl
-// Accepts multipart form with: file (PDF/image), from_doc, to_doc
+// Accepts multipart form with: file (PDF/image), from_doc, to_doc, model
 func (ctrl *DocumentConvertController) ConvertMBL(ctx *gin.Context) {
 	// 1. Validate from_doc and to_doc fields
 	fromDoc := ctx.PostForm("from_doc")
@@ -35,10 +36,10 @@ func (ctrl *DocumentConvertController) ConvertMBL(ctx *gin.Context) {
 		return
 	}
 
-	// 2. Validate mode field
-	mode := ctx.PostForm("mode")
-	if mode != "FCL" && mode != "LCL" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "mode must be 'FCL' or 'LCL'"})
+	// 2. Validate extraction model field
+	model := ctx.PostForm("model")
+	if model == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "model is required"})
 		return
 	}
 
@@ -64,8 +65,12 @@ func (ctrl *DocumentConvertController) ConvertMBL(ctx *gin.Context) {
 	}
 
 	// 5. Call service
-	result, err := ctrl.service.ConvertMBL(ctx.Request.Context(), fileBytes, fileHeader.Filename, mode)
+	result, err := ctrl.service.ConvertMBL(ctx.Request.Context(), fileBytes, fileHeader.Filename, model)
 	if err != nil {
+		if errors.Is(err, services.ErrUnsupportedExtractionModel) {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

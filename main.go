@@ -58,6 +58,9 @@ func main() {
 	shipmentController := controllers.NewShipmentController(shipmentService)
 	dashboardController := controllers.NewDashboardController(dashboardService)
 	authController := controllers.NewAuthController(forwarderService)
+	infoToDocRepo := repository.NewInfoToDocRepository(db)
+	infoToDocService := services.NewInfoToDocService(infoToDocRepo, hblDocRepo, pdfService)
+	infoToDocController := controllers.NewInfoToDocController(infoToDocService)
 
 	// 5. Initialize Router
 	r := gin.Default()
@@ -72,7 +75,7 @@ func main() {
 	r.Use(cors.New(corsConfig))
 
 	// 6. Register Routes
-	routes.RegisterRoutes(r, pdfService, pdfSaveService, docConvertService, docPreviewService, bookingController, shipmentController, dashboardController, authController)
+	routes.RegisterRoutes(r, pdfService, pdfSaveService, docConvertService, docPreviewService, bookingController, shipmentController, dashboardController, authController, infoToDocController)
 
 	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {

@@ -20,7 +20,7 @@ func NewDocumentPreviewController(service services.DocumentPreviewService) *Docu
 }
 
 // PreviewHBL handles POST /api/v1/preview/hbl
-// Accepts JSON body with mbl_number and shipper_list (array of shipper_ids)
+// Accepts JSON body with mbl_number and shipment_list (array of shipment_ids)
 func (ctrl *DocumentPreviewController) PreviewHBL(ctx *gin.Context) {
 	var req hbl_schema.PreviewHBLRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -32,8 +32,8 @@ func (ctrl *DocumentPreviewController) PreviewHBL(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "mbl_number is required"})
 		return
 	}
-	if len(req.ShipperList) == 0 {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "shipper_list must contain at least one shipper_id"})
+	if len(req.ShipmentList) == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "shipment_list must contain at least one shipment_id"})
 		return
 	}
 

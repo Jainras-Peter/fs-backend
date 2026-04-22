@@ -2,14 +2,19 @@ package mbl_schema
 
 // ConvertMBLResponse is the API response for POST /api/v1/convert/mbl
 type ConvertMBLResponse struct {
-	MBLNumber   string          `json:"mbl_number"`
-	ShipperList []ShipperDetail `json:"shipper_list"`
+	MBLNumber       string             `json:"mbl_number"`
+	ShipmentsList []ShipmentListItem `json:"shipments_list"`
 }
 
-// ShipperDetail holds individual shipper information returned in the response
-type ShipperDetail struct {
-	ShipperID      string `json:"shipper_id"`
-	ShipperName    string `json:"shipper_name"`
-	ShipperAddress string `json:"shipper_address"`
-	ShipperContact string `json:"shipper_contact"`
+// ShipmentListItem holds individual shipment information returned in the response.
+type ShipmentListItem struct {
+	ShipmentID       string  `json:"shipment_id"`
+	ShipperID        string  `json:"shipper_id"`
+	GoodsDescription string  `json:"goods_description"`
+	PackagesCount    int     `json:"packages_count"`
+	GrossWeight      float64 `json:"gross_weight"`
+	NetWeight        float64 `json:"net_weight"`
+	Volume           float64 `json:"volume"`
+	MarksAndNumbers  string  `json:"marks_and_numbers"`
+	Measurement      string  `json:"measurement"`
 }

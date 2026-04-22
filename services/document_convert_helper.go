@@ -19,9 +19,9 @@ import (
 	"fs-backend/repository"
 )
 
-// extractMBLFromDocument sends the file and MBL extraction schema to the
-// Document Extraction server and returns the filled data map.
-func extractMBLFromDocument(extractionBaseURL string, fileBytes []byte, filename string) (map[string]interface{}, error) {
+// extractMBLFromDocument sends the file, selected extraction engine, and MBL
+// extraction schema to the document extraction server.
+func extractMBLFromDocument(extractionBaseURL string, fileBytes []byte, filename, extractionEngine string) (map[string]interface{}, error) {
 	// Build the extraction schema
 	schema := mbl_schema.GetMBLExtractionSchema()
 	schemaJSON, err := json.Marshal(schema)
@@ -55,6 +55,9 @@ func extractMBLFromDocument(extractionBaseURL string, fileBytes []byte, filename
 	// Add the schema field
 	if err := writer.WriteField("schema", string(schemaJSON)); err != nil {
 		return nil, fmt.Errorf("failed to write schema field: %w", err)
+	}
+	if err := writer.WriteField("extraction_engine", extractionEngine); err != nil {
+		return nil, fmt.Errorf("failed to write extraction_engine field: %w", err)
 	}
 
 	if err := writer.Close(); err != nil {
@@ -186,13 +189,12 @@ func mapExtractionToMBLDocument(data map[string]interface{}) *mbl_schema.MBLDocu
 
 // lookupShippersByMBLNumber chains Booking → Shipment → Shipper DB lookups
 // to find all shipper details linked to the given MBL number.
-func lookupShippersByMBLNumber(
+func lookupShipmentsByMBLNumber(
 	ctx context.Context,
 	mblNumber string,
 	bookingRepo repository.BookingRepository,
 	shipmentRepo repository.ShipmentRepository,
-	shipperRepo repository.ShipperRepository,
-) ([]mbl_schema.ShipperDetail, error) {
+) ([]mbl_schema.ShipmentListItem, error) {
 	// Step 1: Find booking by MBL number → get shipment_ids
 	booking, err := bookingRepo.FindByMBLNumber(ctx, mblNumber)
 	if err != nil {
@@ -200,7 +202,7 @@ func lookupShippersByMBLNumber(
 	}
 
 	if len(booking.ShipmentIDs) == 0 {
-		return []mbl_schema.ShipperDetail{}, nil
+		return []mbl_schema.ShipmentListItem{}, nil
 	}
 
 	// Step 2: Find shipments by shipment_ids → get unique shipper_ids
@@ -210,33 +212,22 @@ func lookupShippersByMBLNumber(
 	}
 
 	// Collect unique shipper IDs
-	shipperIDSet := make(map[string]bool)
-	var shipperIDs []string
-	for _, s := range shipments {
-		if s.ShipperID != "" && !shipperIDSet[s.ShipperID] {
-			shipperIDSet[s.ShipperID] = true
-			shipperIDs = append(shipperIDs, s.ShipperID)
-		}
-	}
-
-	if len(shipperIDs) == 0 {
-		return []mbl_schema.ShipperDetail{}, nil
-	}
 
 	// Step 3: Find shippers by shipper_ids → get details
-	shippers, err := shipperRepo.FindByShipperIDs(ctx, shipperIDs)
-	if err != nil {
-		return nil, fmt.Errorf("shippers lookup failed: %w", err)
-	}
 
 	// Map to response models
-	result := make([]mbl_schema.ShipperDetail, 0, len(shippers))
-	for _, sh := range shippers {
-		result = append(result, mbl_schema.ShipperDetail{
-			ShipperID:      sh.ShipperID,
-			ShipperName:    sh.ShipperName,
-			ShipperAddress: sh.ShipperAddress,
-			ShipperContact: sh.ShipperContact,
+	result := make([]mbl_schema.ShipmentListItem, 0, len(shipments))
+	for _, shipment := range shipments {
+		result = append(result, mbl_schema.ShipmentListItem{
+			ShipmentID:       shipment.ShipmentID,
+			ShipperID:        shipment.ShipperID,
+			GoodsDescription: shipment.GoodsDescription,
+			PackagesCount:    shipment.PackagesCount,
+			GrossWeight:      shipment.GrossWeight,
+			NetWeight:        shipment.NetWeight,
+			Volume:           shipment.Volume,
+			MarksAndNumbers:  shipment.MarksAndNumbers,
+			Measurement:      shipment.Measurement,
 		})
 	}
 

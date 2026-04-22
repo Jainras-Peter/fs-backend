@@ -3,7 +3,7 @@ package hbl_schema
 // PreviewHBLRequest is the JSON payload for POST /api/v1/preview/hbl
 type PreviewHBLRequest struct {
 	MBLNumber   string   `json:"mbl_number" binding:"required"`
-	ShipperList []string `json:"shipper_list" binding:"required"` // array of shipper_ids
+	ShipmentList []string `json:"shipment_list" binding:"required"` // array of shipment_ids
 }
 
 // PreviewHBLResponse is the response from POST /api/v1/preview/hbl

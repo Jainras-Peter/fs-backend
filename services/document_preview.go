@@ -36,12 +36,12 @@ func NewDocumentPreviewService(
 	}
 }
 
-// PreviewHBL generates multiple HBLs from an MBL and a list of shipper IDs.
+// PreviewHBL generates multiple HBLs from an MBL and a list of shipment IDs.
 // Flow:
 // 1. Fetch MBL from DB
-// 2. Fetch shipments by shipper IDs
-// 3. Fetch shipper details
-// 4. For each shipper: map MBL + shipment + shipper → HBL, generate HBL number, store in DB
+// 2. Fetch shipments by shipment IDs
+// 3. Extract shipper IDs from shipments and fetch shipper details
+// 4. For each shipment: map MBL + shipment + shipper → HBL, generate HBL number, store in DB
 // 5. Return all generated HBLs
 func (s *documentPreviewService) PreviewHBL(ctx context.Context, req hbl_schema.PreviewHBLRequest) (*hbl_schema.PreviewHBLResponse, error) {
 	// Step 1: Fetch MBL from DB
@@ -51,20 +51,27 @@ func (s *documentPreviewService) PreviewHBL(ctx context.Context, req hbl_schema.
 	}
 	log.Printf("Fetched MBL: %s", req.MBLNumber)
 
-	// Step 2: Fetch shipments for the given shipper IDs
-	shipments, err := s.shipmentRepo.FindByShipperIDs(ctx, req.ShipperList)
+	// Step 2: Fetch shipments for the given shipment IDs
+	shipments, err := s.shipmentRepo.FindByShipmentIDs(ctx, req.ShipmentList)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch shipments: %w", err)
 	}
 
-	// Build shipper_id → shipment map
-	shipmentByShipperID := make(map[string]repository.ShipmentDocument)
+	// Build shipment_id → shipment map, and collect unique shipper IDs
+	shipmentByID := make(map[string]repository.ShipmentDocument)
+	shipperIDMap := make(map[string]bool)
+	var shipperIDs []string
+
 	for _, shipment := range shipments {
-		shipmentByShipperID[shipment.ShipperID] = shipment
+		shipmentByID[shipment.ShipmentID] = shipment
+		if !shipperIDMap[shipment.ShipperID] {
+			shipperIDMap[shipment.ShipperID] = true
+			shipperIDs = append(shipperIDs, shipment.ShipperID)
+		}
 	}
 
 	// Step 3: Fetch shipper details
-	shippers, err := s.shipperRepo.FindByShipperIDs(ctx, req.ShipperList)
+	shippers, err := s.shipperRepo.FindByShipperIDs(ctx, shipperIDs)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch shippers: %w", err)
 	}
@@ -75,20 +82,20 @@ func (s *documentPreviewService) PreviewHBL(ctx context.Context, req hbl_schema.
 		shipperByID[shipper.ShipperID] = shipper
 	}
 
-	// Step 4: Generate HBLs — one per shipper
+	// Step 4: Generate HBLs — one per shipment
 	var hblList []hbl_schema.HBLData
 	hblIndex := 1
 
-	for _, shipperID := range req.ShipperList {
-		shipment, shipmentFound := shipmentByShipperID[shipperID]
-		shipper, shipperFound := shipperByID[shipperID]
-
+	for _, shipmentID := range req.ShipmentList {
+		shipment, shipmentFound := shipmentByID[shipmentID]
 		if !shipmentFound {
-			log.Printf("Warning: no shipment found for shipper_id %s, skipping", shipperID)
+			log.Printf("Warning: no shipment found for shipment_id %s, skipping", shipmentID)
 			continue
 		}
+
+		shipper, shipperFound := shipperByID[shipment.ShipperID]
 		if !shipperFound {
-			log.Printf("Warning: no shipper details found for shipper_id %s, skipping", shipperID)
+			log.Printf("Warning: no shipper details found for shipper_id %s (shipment %s), skipping", shipment.ShipperID, shipmentID)
 			continue
 		}
 
@@ -115,7 +122,7 @@ func (s *documentPreviewService) PreviewHBL(ctx context.Context, req hbl_schema.
 		if err := s.hblRepo.InsertHBL(ctx, hblDoc); err != nil {
 			log.Printf("Warning: failed to store HBL %s: %v", hblNumber, err)
 		} else {
-			log.Printf("HBL stored in DB: %s (shipment: %s, shipper: %s)", hblNumber, shipment.ShipmentID, shipperID)
+			log.Printf("HBL stored in DB: %s (shipment: %s, shipper: %s)", hblNumber, shipmentID, shipment.ShipperID)
 		}
 
 		hblList = append(hblList, hblData)

@@ -19,6 +19,7 @@ type documentPreviewService struct {
 	hblRepo      repository.HBLRepository
 	shipmentRepo repository.ShipmentRepository
 	shipperRepo  repository.ShipperRepository
+	mblCacheRepo repository.MBLCacheRepository
 }
 
 // NewDocumentPreviewService creates a new DocumentPreviewService with all dependencies
@@ -27,12 +28,14 @@ func NewDocumentPreviewService(
 	hblRepo repository.HBLRepository,
 	shipmentRepo repository.ShipmentRepository,
 	shipperRepo repository.ShipperRepository,
+	mblCacheRepo repository.MBLCacheRepository,
 ) DocumentPreviewService {
 	return &documentPreviewService{
 		mblRepo:      mblRepo,
 		hblRepo:      hblRepo,
 		shipmentRepo: shipmentRepo,
 		shipperRepo:  shipperRepo,
+		mblCacheRepo: mblCacheRepo,
 	}
 }
 
@@ -50,6 +53,15 @@ func (s *documentPreviewService) PreviewHBL(ctx context.Context, req hbl_schema.
 		return nil, fmt.Errorf("MBL not found for number %s: %w", req.MBLNumber, err)
 	}
 	log.Printf("Fetched MBL: %s", req.MBLNumber)
+
+	// Fetch MBL Cache to get raw extracted data for accurate scores
+	mblCacheDoc, err := s.mblCacheRepo.FindByMBLNumber(ctx, req.MBLNumber)
+	var validationScore, accuracyScore float64
+	if err == nil && mblCacheDoc != nil {
+		validationScore, accuracyScore = CalculateScores(mblCacheDoc.ExtractedData)
+	} else {
+		log.Printf("Warning: MBL_Cache not found for %s, scores will be 0", req.MBLNumber)
+	}
 
 	// Step 2: Fetch shipments for the given shipment IDs
 	shipments, err := s.shipmentRepo.FindByShipmentIDs(ctx, req.ShipmentList)
@@ -84,7 +96,12 @@ func (s *documentPreviewService) PreviewHBL(ctx context.Context, req hbl_schema.
 
 	// Step 4: Generate HBLs — one per shipment
 	var hblList []hbl_schema.HBLData
-	hblIndex := 1
+	
+	totalCount, err := s.hblRepo.CountTotal(ctx)
+	if err != nil {
+		totalCount = 0
+	}
+	hblIndex := int(totalCount) + 1
 
 	for _, shipmentID := range req.ShipmentList {
 		shipment, shipmentFound := shipmentByID[shipmentID]
@@ -99,19 +116,11 @@ func (s *documentPreviewService) PreviewHBL(ctx context.Context, req hbl_schema.
 			continue
 		}
 
-		// Generate HBL number
+		// Generate HBL number based on global HBL collection count
 		hblNumber := generateHBLNumber(req.MBLNumber, hblIndex)
 
-		// Check if HBL already exists (e.g. edited by user)
-		if existingDoc, err := s.hblRepo.FindByHBLNumber(ctx, hblNumber); err == nil {
-			log.Printf("Found existing HBL %s, using stored data", hblNumber)
-			hblList = append(hblList, existingDoc.HBL)
-			hblIndex++
-			continue
-		}
-
 		// Map MBL + shipment + shipper → HBL
-		hblData := mapMBLToHBL(mblDoc.MBL, shipment, shipper, hblNumber, mblDoc.Mode)
+		hblData := mapMBLToHBL(mblDoc.MBL, shipment, shipper, hblNumber, mblDoc.Mode, validationScore, accuracyScore)
 
 		// Store HBL in DB
 		hblDoc := &hbl_schema.HBLDocument{

@@ -11,9 +11,9 @@ import (
 )
 
 // generateHBLNumber creates a unique HBL number based on the MBL number and index.
-// Format: HBL-{MBL_NUMBER}-001, HBL-{MBL_NUMBER}-002, etc.
+// Format: HBL{MBL_NUMBER}001, HBL{MBL_NUMBER}002, etc.
 func generateHBLNumber(mblNumber string, index int) string {
-	return fmt.Sprintf("HBL-%s-%03d", mblNumber, index)
+	return fmt.Sprintf("HBL%s%03d", mblNumber, index)
 }
 
 // mapMBLToHBL maps MBL data + shipment cargo data + shipper details into an HBLData struct.

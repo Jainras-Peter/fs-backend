@@ -35,6 +35,8 @@ type HBLData struct {
 	ReeferDetails      HBLReeferDetails   `bson:"reefer_details" json:"reefer_details"`
 	ShipmentSummary    HBLShipmentSummary `bson:"shipment_summary" json:"shipment_summary"`
 	FreightDetails     HBLFreightDetails  `bson:"freight_details" json:"freight_details"`
+	ValidationScore    float64            `bson:"validation_score" json:"validation_score"`
+	AccuracyScore      float64            `bson:"accuracy_score" json:"accuracy_score"`
 }
 
 // HBLCarrier holds carrier name

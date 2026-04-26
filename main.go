@@ -42,7 +42,7 @@ func main() {
 		extractionBaseURL, mblRepo, mblCacheRepo, bookingRepo, shipmentRepo, shipperRepo,
 	)
 	docPreviewService := services.NewDocumentPreviewService(
-		mblRepo, hblRepo, shipmentRepo, shipperRepo,
+		mblRepo, hblRepo, shipmentRepo, shipperRepo, mblCacheRepo,
 	)
 	bookingService := services.NewBookingService(shipperRepo, bookingRepo, shipmentRepo)
 	shipmentService := services.NewShipmentService(shipmentRepo, bookingRepo, shipperRepo)

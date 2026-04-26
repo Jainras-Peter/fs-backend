@@ -22,6 +22,7 @@ type MBLCacheDocument struct {
 // MBLCacheRepository defines operations on the "MBL_Cache" collection
 type MBLCacheRepository interface {
 	FindByFileHashAndEngine(ctx context.Context, fileHash, engine string) (*MBLCacheDocument, error)
+	FindByMBLNumber(ctx context.Context, mblNumber string) (*MBLCacheDocument, error)
 	Insert(ctx context.Context, doc *MBLCacheDocument) error
 }
 
@@ -41,6 +42,17 @@ func (r *mblCacheRepository) FindByFileHashAndEngine(ctx context.Context, fileHa
 	err := r.collection.FindOne(ctx, bson.M{
 		"file_hash": fileHash,
 		"engine":    engine,
+	}).Decode(&doc)
+	if err != nil {
+		return nil, err
+	}
+	return &doc, nil
+}
+
+func (r *mblCacheRepository) FindByMBLNumber(ctx context.Context, mblNumber string) (*MBLCacheDocument, error) {
+	var doc MBLCacheDocument
+	err := r.collection.FindOne(ctx, bson.M{
+		"mbl_number": mblNumber,
 	}).Decode(&doc)
 	if err != nil {
 		return nil, err
